@@ -20,7 +20,6 @@ SOFTWARE.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -82,7 +81,18 @@ namespace EulerDemo
       }
 
       // read the translation file and feed the language
-      XDocument xDoc = XDocument.Load(Settings.Default.LanguageFileName);
+      XDocument xDoc;
+      try
+      {
+        xDoc = XDocument.Load(Settings.Default.LanguageFileName);
+      }
+      catch (Exception exception)
+      {
+        MessageBox.Show("Error while loading xml file " + exception);
+        CreateLanguageFile();
+        return;
+      }
+
       var result = from node in xDoc.Descendants("term")
                    where node.HasElements
                    let xElementName = node.Element("name")
@@ -99,8 +109,23 @@ namespace EulerDemo
                    };
       foreach (var i in result)
       {
-        _languageDicoEn.Add(i.name, i.englishValue);
-        _languageDicoFr.Add(i.name, i.frenchValue);
+        if (!_languageDicoEn.ContainsKey(i.name))
+        {
+          _languageDicoEn.Add(i.name, i.englishValue);
+        }
+        else
+        {
+          MessageBox.Show("Your xml file has duplicate like: " + i.name);
+        }
+
+        if (!_languageDicoFr.ContainsKey(i.name))
+        {
+          _languageDicoFr.Add(i.name, i.frenchValue);
+        }
+        else
+        {
+          MessageBox.Show("Your xml file has duplicate like: " + i.name);
+        }
       }
     }
 
@@ -461,7 +486,7 @@ namespace EulerDemo
     {
       Control focusedControl = FindFocusedControl(new List<Control> { }); // add your controls in the List
       TextBox control = focusedControl as TextBox;
-      control?.SelectAll();
+      if (control != null) control.SelectAll();
     }
 
     private void CutToClipboard(TextBoxBase tb, string errorMessage = "nothing")
